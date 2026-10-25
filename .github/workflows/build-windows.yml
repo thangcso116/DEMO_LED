@@ -1,0 +1,41 @@
+name: Build portable Windows EXE
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          architecture: "x64"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build portable executable
+        run: |
+          pyinstaller --noconfirm --clean --windowed --onedir --name MohuanLED_RGB_Studio app.py
+
+      - name: Package portable folder
+        shell: pwsh
+        run: |
+          Compress-Archive -Path dist/MohuanLED_RGB_Studio -DestinationPath MohuanLED_RGB_Studio_Portable_Windows.zip -Force
+
+      - name: Upload portable package
+        uses: actions/upload-artifact@v4
+        with:
+          name: MohuanLED_RGB_Studio_Portable_Windows
+          path: MohuanLED_RGB_Studio_Portable_Windows.zip
+          if-no-files-found: error
